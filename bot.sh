@@ -66,10 +66,7 @@ process_cmd() {
             request "$MSG_URL" \
                 -d "chat_id=${DATA["chat/id"]}" \
                 -d "parse_mode=Markdown" \
-                --data-urlencode 'text=*Available commands*:
-• /start  `- Start bot and get this message.`
-• /say    `- Tell me something to say.`
-Written by Vitor Vasconcellos (@hvolkoff).' \
+                --data-urlencode "text@${__dir}/start.md" \
                 || true
             ;;
         /say)
