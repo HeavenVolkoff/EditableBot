@@ -138,14 +138,13 @@ while request "$UPD_URL" -d "offset=${OFFSET}" -d "timeout=${TIMEOUT}"; do
     OFFSET="$(jq '. | max_by(.update_id) .update_id // 0' <<<"$UPDATE")"
     OFFSET="$((OFFSET + 1))"
     echo "$OFFSET" >"$OFFSET_FILE"
-    ((OFFSET == 1))  && continue
+    ((OFFSET == 1)) && continue
 
     # Filter messages from updates
     messages=($(jq -c '(. | map(.message) | .[]) // empty' <<<"$UPDATE"))
     for message in "${messages[@]}"; do
         ( to_dict "$message" && process_message ) &
     done
-    wait
 
     # Don't retain memory
     unset DATA
