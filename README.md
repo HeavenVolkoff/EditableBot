@@ -16,9 +16,12 @@ pin messages in groups.
 
 ## Installation
 
-Run: `sudo ./install.sh`
+Create a `token.key` file with you bot key inside the repository root.
 
-Will create a systemd service called bot, and activate it.
+Run: `sudo ./install.sh`.
+
+It will create a systemd service called bot, and activate it.
+
 All files will be copied to `/usr/local/bot`.
 
 ## License
