@@ -23,6 +23,7 @@ readonly __root="$(cd "$(dirname "${__dir}")" && pwd)"
 __result=""
 
 # ----- global properties -----------------------------------------------------\
+# Only split on newlines, retain spaces
 IFS=$'\n'
 
 # Support files
@@ -48,43 +49,19 @@ OFFSET="${OFFSET:-"$(cat "$OFFSET_FILE" 2>/dev/null || echo "")"}"
 OFFSET=${OFFSET:-1}
 TIMEOUT=${TIMEOUT:-60}
 
+# Bot info (to be filled later)
+BOT_ID=""
+BOT_USERNAME=""
+
 # ----- Support functions -----------------------------------------------------\
 . "$__dir/function.sh"
 
-# ----- Main ------------------------------------------------------------------\
-if ! { request "$GET_ME_URL" && to_dict "$__result"; }; then
-    echo "Failed to connect to Telegram" >&2
-    exit 1
-fi
-
-BOT_ID="${DATA["id"]}"
-BOT_USERNAME="${DATA["username"]}"
-
-echo "Bot<name=${BOT_USERNAME}, id=${BOT_ID}>"
-
-process_message()  {
-    local cmd
+process_cmd() {
     local text
-    local orig_cmd
-    local bot_target
 
-    orig_cmd=($( echo "${DATA["text"]:-""}" | tr " " "\n"))
-    orig_cmd="${orig_cmd[0]:-""}"
-    if [ ${orig_cmd:0:1} == "/" ]; then
-        cmd=($( echo "$orig_cmd" | tr "@" "\n"))
-        bot_target="${cmd[1]:-"$BOT_USERNAME"}"
-        cmd="${cmd[0]:-""}"
+    text="${2:-""}"
 
-        [ "$bot_target" != "$BOT_USERNAME" ] && return 0
-    else
-        cmd=""
-        orig_cmd=""
-        bot_target=""
-    fi
-
-    text="${DATA["text"]:${#orig_cmd}}"
-
-    case "$cmd" in
+    case "${1:-""}" in
         /start)
             request "$MSG_URL" \
                 -d "chat_id=${DATA["chat/id"]}" \
@@ -99,39 +76,82 @@ Written by Vitor Vasconcellos (@hvolkoff).' \
             [ -z "$text" ] && return 0
             request "$MSG_URL" \
                 -d "chat_id=${DATA["chat/id"]}" \
-                --data-urlencode "text=${text:0:4096}" \
+                --data-urlencode "text=${text}" \
                 || true
             ;;
         *)
-            if [ -n "${DATA["reply_to_message/message_id"]:-""}" ]; then
-                request "$EDIT_MSG_URL" \
-                    -d "chat_id=${DATA["chat/id"]}" \
-                    -d "message_id=${DATA["reply_to_message/message_id"]}" \
-                    --data-urlencode "text=${text:0:4096}" \
-                    || true
-            else
-                echo "Unrecognized command: ${cmd[0]}" >&2
-            fi
+            echo "Unrecognized command: ${cmd[0]}" >&2
             ;;
     esac
 }
 
+process_message()  {
+    local cmd
+    local orig_cmd
+    local bot_target
+
+    # Check if message is a command
+    orig_cmd=($( tr " " "\n" <<<"${DATA["text"]:-""}"))
+    orig_cmd="${orig_cmd[0]:-""}"
+    if [ ${orig_cmd:0:1} == "/" ]; then
+        # Message is a command
+        cmd=($( tr "@" "\n" <<<"$orig_cmd"))
+        bot_target="${cmd[1]:-"$BOT_USERNAME"}"
+        cmd="${cmd[0]:-""}"
+
+        # Not a command for this bot though
+        [ "$bot_target" != "$BOT_USERNAME" ] && return 0
+
+        process_cmd "$cmd" "${DATA["text"]:${#orig_cmd}}"
+        return $?
+    fi
+
+    # Just a normal direct message
+
+    if [ -n "${DATA["reply_to_message/message_id"]:-""}" ]; then
+        request "$EDIT_MSG_URL" \
+            -d "chat_id=${DATA["chat/id"]}" \
+            -d "message_id=${DATA["reply_to_message/message_id"]}" \
+            --data-urlencode "text=${DATA[text]}" \
+            || true
+    fi
+}
+
+# ----- Main ------------------------------------------------------------------\
+if ! { request "$GET_ME_URL" && to_dict "$__result"; }; then
+    echo "Failed to connect to Telegram" >&2
+    exit 1
+fi
+
+# Fill bot info with information collected from /getMet
+BOT_ID="${DATA["id"]}"
+BOT_USERNAME="${DATA["username"]}"
+
+# Don't retain memory
+unset DATA
+
+echo "Bot<name=${BOT_USERNAME}, id=${BOT_ID}>"
+
+# Pooling loop
 while request "$UPD_URL" -d "offset=${OFFSET}" -d "timeout=${TIMEOUT}"; do
     UPDATE="$__result"
-    OFFSET="$(echo "$UPDATE" | jq '. | max_by(.update_id) .update_id // 0')"
+
+    # Offset logic
+    OFFSET="$(jq '. | max_by(.update_id) .update_id // 0' <<<"$UPDATE")"
     OFFSET="$((OFFSET + 1))"
-
     echo "$OFFSET" >"$OFFSET_FILE"
+    ((OFFSET == 1))  && continue
 
-    [ "$OFFSET" -eq 1 ] && continue
-
-    messages=($( echo "$UPDATE" | jq -c '(. | map(.message) | .[]) // empty'))
+    # Filter messages from updates
+    messages=($(jq -c '(. | map(.message) | .[]) // empty' <<<"$UPDATE"))
     for message in "${messages[@]}"; do
         ( to_dict "$message" && process_message ) &
     done
     wait
 
+    # Don't retain memory
     unset DATA
 done
 
+# If pooling failed something went wrong
 exit 1
