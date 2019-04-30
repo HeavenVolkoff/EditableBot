@@ -38,6 +38,7 @@ to_dict() {
                 DATA["$key"]="$value"
             fi
         else
+            # TODO: escape possible `\` characters in key
             for ((i = 0; i < lenght; i += 2)); do
                 set -- \
                     "${value[$((i + 1))]}" \

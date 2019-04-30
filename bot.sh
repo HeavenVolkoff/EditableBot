@@ -97,6 +97,7 @@ process_message()  {
         # Message is a command
         cmd=($( tr "@" "\n" <<<"$orig_cmd"))
         bot_target="${cmd[1]:-"$BOT_USERNAME"}"
+        orig_cmd="${cmd[0]:-""}${cmd[1]:+"@${cmd[1]}"}"
         cmd="${cmd[0]:-""}"
 
         # Not a command for this bot though
