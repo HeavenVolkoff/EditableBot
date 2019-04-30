@@ -109,7 +109,8 @@ process_message()  {
 
     # Just a normal direct message
 
-    if [ -n "${DATA["reply_to_message/message_id"]:-""}" ]; then
+    if [ -n "${DATA["reply_to_message/message_id"]:-""}" \
+        -a "${DATA["reply_to_message/from/id"]}" == "$BOT_ID" ]; then
         request "$EDIT_MSG_URL" \
             -d "chat_id=${DATA["chat/id"]}" \
             -d "message_id=${DATA["reply_to_message/message_id"]}" \
