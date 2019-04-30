@@ -96,7 +96,7 @@ Written by Vitor Vasconcellos (@hvolkoff).' \
                 || true
             ;;
         /say)
-            [ -z "$text" ] && continue
+            [ -z "$text" ] && return 0
             request "$MSG_URL" \
                 -d "chat_id=${DATA["chat/id"]}" \
                 --data-urlencode "text=${text:0:4096}" \
