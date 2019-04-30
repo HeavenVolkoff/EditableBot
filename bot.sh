@@ -53,6 +53,9 @@ TIMEOUT=${TIMEOUT:-60}
 BOT_ID=""
 BOT_USERNAME=""
 
+# Placeholder for message data
+DATA=""
+
 # ----- Support functions -----------------------------------------------------\
 . "$__dir/function.sh"
 
