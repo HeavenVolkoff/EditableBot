@@ -16,7 +16,7 @@ pin messages in groups.
 
 ## Installation
 
-Create a `token.key` file with you bot key inside the repository root.
+Create a `token.key` file, with you bot token, inside the repository's root.
 
 Run: `sudo ./install.sh`.
 
