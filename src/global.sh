@@ -6,11 +6,13 @@ ASSETS="$(realpath -e "${__dir}/../assets")"
 DB_FILE="${ASSETS}/db.json"
 TOKEN_FILE="${ASSETS}/token.key"
 
+# Verify if database exists and that it is a valid json file
 if ! cat "$DB_FILE" | jq "." >/dev/null 2>/dev/null; then
     printf "Invalid Database, reseting...\n" >&2
     printf "{}" >"$DB_FILE"
 fi
 
+# Open file
 exec 200<>"$DB_FILE"
 
 # Token validation

@@ -1,8 +1,19 @@
 #!/usr/bin/env bash
 
+# --- Environment Validation --------------------------------------------------\
 # Only bash >= 4 is supported
 if ((${BASH_VERSINFO[0]:-0} <= 3)); then
     printf "Only bash >= 4 supported" >&2
+    exit 1
+fi
+
+if ! hash curl >/dev/null 2>/dev/null; then
+    printf "Curl (https://curl.haxx.se/) is required" >&2
+    exit 1
+fi
+
+if ! hash jq >/dev/null 2>/dev/null; then
+    printf "jq (https://stedolan.github.io/jq/) is required" >&2
     exit 1
 fi
 
