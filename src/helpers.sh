@@ -1,3 +1,10 @@
+trim() {
+    local var="$*"
+    var="${var#"${var%%[![:space:]]*}"}"
+    var="${var%"${var##*[![:space:]]}"}"
+    echo -n "$var"
+}
+
 clear_str() {
     set -- "${1%\"}"
     printf -- "${1#\"}"
@@ -22,7 +29,7 @@ to_dict() {
 
     while (($# > 0)); do
         key="$2"
-        value=($( jq -c "$json_cmd" <<<"$1"))
+        value=($(jq -c "$json_cmd" <<<"$1"))
         lenght="${#value[@]}"
 
         shift 2
@@ -59,5 +66,24 @@ request() {
 
     shift
 
-    __result="$(jq -c 'if .ok then .result else error(.description) end' <<<"$( curl -s "$url" "$@")")"
+    __result="$(jq -c 'if .ok then .result else error(.description) end' <<<"$(curl -s "$url" "$@")")"
+}
+
+db_read() {
+    local cmd="$1"
+    [ -z "$cmd" ] && return 1
+
+    flock -s 200
+    __result="$(jq "$cmd" "${DB_FILE}")"
+    flock -u 200
+}
+
+db_write() {
+    local cmd="$1"
+    [ -z "$cmd" ] && return 1
+
+    flock -x 200
+    __result="$(jq "$cmd" "${DB_FILE}")"
+    printf "$__result" >"${DB_FILE}"
+    flock -u 200
 }
