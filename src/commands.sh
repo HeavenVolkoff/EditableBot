@@ -34,7 +34,7 @@ debug_command() {
 
     local dev_id="$__result"
 
-    if [ -n "$dev_id" ]; then
+    if [ "$dev_id" = "${DATA["chat/id"]}" ]; then
         text="$(eval "$text")"
         request "$MSG_URL" \
             -d "chat_id=${dev_id}" \
