@@ -58,7 +58,6 @@ to_dict() {
 
 request() {
     local url
-    local data
 
     url="${1:-""}"
 

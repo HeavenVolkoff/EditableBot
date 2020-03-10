@@ -9,16 +9,42 @@ dev_command() {
 }
 
 say_command() {
-    local text="$1"
-
+    local text="$(echo "$1" | tr "\n" " " | tr -s " " | sed -e 's/[^A-Za-z _.,!?:'"'"']//g' | xargs)"
     if [ -z "$text" ]; then
+        # TODO: Improve error for message with only deleted characters
         request "$MSG_URL" \
             -d "chat_id=${DATA["chat/id"]}" \
             --data-urlencode 'text=You gotta tell me what to say'
-    else
+
+        return
+
         request "$MSG_URL" \
             -d "chat_id=${DATA["chat/id"]}" \
             --data-urlencode "text=${text}"
+    fi
+
+    case "${text:(-1)}" in
+        "." | "!" | "?")
+            ;;
+        "," | ":" | "_")
+            text="${text::-1}."
+            ;;
+        *)
+            text="${text}."
+            ;;
+    esac
+
+    local tempfile="$(mktemp -uq)"
+    if curl -sfL 'https://api.fifteen.ai/app/getAudioFile' \
+            -H 'Content-Type: application/json' \
+            --data "$(printf '{"text":"%s","character":"GLaDOS"}' "$text")" \
+            | ffmpeg -hide_banner -loglevel panic -f wav -i pipe:0 -f ogg "$tempfile"; then
+        request "$VOICE_URL" -F "chat_id=${DATA["chat/id"]}" -F "voice=@${tempfile};filename=voice.ogg" \
+            ; rm "$tempfile"
+    else
+        request "$MSG_URL" \
+            -d "chat_id=${DATA["chat/id"]}" \
+            --data-urlencode "text=Failed to execute say"
     fi
 }
 

@@ -26,6 +26,7 @@ fi
 URL="https://api.telegram.org/bot${TOKEN}"
 UPD_URL="${URL}/getUpdates"
 MSG_URL="${URL}/sendMessage"
+VOICE_URL="${URL}/sendVoice"
 GET_ME_URL="${URL}/getMe"
 EDIT_MSG_URL="${URL}/editMessageText"
 
