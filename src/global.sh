@@ -3,19 +3,28 @@ IFS=$'\n'
 
 # Support files
 ASSETS="$(realpath -e "${__dir}/../assets")"
-DB_FILE="${ASSETS}/db.json"
-TOKEN_FILE="${ASSETS}/token.key"
+
+VENDOR="$(realpath "${__dir}/../vendor")"
+# Initilize vendor if necessary
+if ! find "$VENDOR" -mindepth 1 -type d | read; then
+    printf "Initializing vendor...\n" >&2
+    bash "$(realpath -m "${VENDOR}/../vendor.sh")"
+fi
+
+PERL_VENDOR="use feature 'unicode_strings'; use utf8; use lib '$VENDOR'"
 
 # Verify if database exists and that it is a valid json file
+DB_FILE="${ASSETS}/db.json"
 if ! cat "$DB_FILE" | jq "." >/dev/null 2>/dev/null; then
     printf "Invalid Database, reseting...\n" >&2
     printf "{}" >"$DB_FILE"
 fi
 
-# Open file
+# Open database file
 exec 200<>"$DB_FILE"
 
 # Token validation
+TOKEN_FILE="${ASSETS}/token.key"
 TOKEN="$(cat $TOKEN_FILE)"
 if [ -z "$TOKEN" ]; then
     printf "Invalid token" >&2

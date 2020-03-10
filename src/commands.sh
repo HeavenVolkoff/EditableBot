@@ -9,7 +9,11 @@ dev_command() {
 }
 
 say_command() {
-    local text="$(echo "$1" | tr "\n" " " | tr -s " " | sed -e 's/[^A-Za-z _.,!?:'"'"']//g' | xargs)"
+    # Normalize text
+    local text="$(perl -e "$PERL_VENDOR; use Text::Unidecode; print unidecode('$1')" \
+                    | sed -e 's/[^A-Za-z _.,!?:'"'"']/ /g' \
+                    | tr "\n" " " \
+                    | xargs)"
     if [ -z "$text" ]; then
         # TODO: Improve error for message with only deleted characters
         request "$MSG_URL" \

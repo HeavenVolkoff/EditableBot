@@ -31,11 +31,14 @@ if ! [ -f "${__dir}/assets/token.key" ]; then
     exit 1
 fi
 
+# Initialize vendor
+. vendor.sh
+
 # Make global runtime folder
 mkdir -p /usr/local/bot
 
 # Copy runtime
-cp -r $__dir/{src,assets} /usr/local/bot/
+cp -r $__dir/{src,vendor,assets} /usr/local/bot/
 [ -f "/usr/local/bot/assets/db.json" ] || { printf "{}" >"/usr/local/bot/assets/db.json"; }
 
 # Set permissions

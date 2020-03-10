@@ -7,7 +7,7 @@ trim() {
 
 clear_str() {
     set -- "${1%\"}"
-    printf -- "${1#\"}"
+    printf -- '%s' "${1#\"}"
 }
 
 to_dict() {

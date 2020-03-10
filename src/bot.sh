@@ -12,6 +12,11 @@ if ! hash curl >/dev/null 2>/dev/null; then
     exit 1
 fi
 
+if ! hash perl >/dev/null 2>/dev/null; then
+    printf "perl (https://www.perl.org/) is required" >&2
+    exit 1
+fi
+
 if ! hash jq >/dev/null 2>/dev/null; then
     printf "jq (https://stedolan.github.io/jq/) is required" >&2
     exit 1
