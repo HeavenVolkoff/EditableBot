@@ -34,7 +34,11 @@ set -o errtrace # trace ERR through 'time command' and other functions
 
 # --- Language Configuration --------------------------------------------------\
 # Check if current language accepts utf-8
-if locale -k LC_CTYPE | egrep -qi 'charmap="utf-?8"'; then
+if ! hash locale >/dev/null 2>/dev/null; then
+    export LANG="C.UTF-8"
+    export LC_ALL="C.UTF-8"
+    export LANGUAGE="C.UTF-8"
+elif locale -k LC_CTYPE | egrep -qi 'charmap="utf-?8"'; then
     # If not get some language that do
     LANGUAGE=( $(locale -a | egrep -i 'utf-?8') )
 

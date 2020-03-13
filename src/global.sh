@@ -5,11 +5,9 @@ IFS=$'\n'
 ASSETS="$(realpath -e "${__dir}/../assets")"
 
 VENDOR="$(realpath "${__dir}/../vendor")"
-# Initilize vendor if necessary
-if ! find "$VENDOR" -mindepth 1 -type d | read; then
-    printf "Initializing vendor...\n" >&2
-    bash "$(realpath -m "${VENDOR}/../vendor.sh")"
-fi
+# Initilize vendor
+printf "Initializing vendor...\n" >&2
+bash "$(realpath -m "${VENDOR}/../vendor.sh")"
 
 PERL_VENDOR="use feature 'unicode_strings'; use utf8; use lib '$VENDOR'"
 
